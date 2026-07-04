@@ -1,14 +1,30 @@
-# ignore pdf files
-*.pdf
-
-# ignore jupyter notebook files
-*.ipynb
-
-# ignore raw MNIST data
-data
-
-# ignore py bytecode
-*.pyc
-
-# Ignore Mac DS_Store files
+# macOS and editor files
 .DS_Store
+
+# Python bytecode and environments
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version
+.venv/
+venv/
+env/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# Local data, generated outputs, and training artifacts
+data/
+outputs/
+artifacts/checkpoints/**/*.pth
+artifacts/checkpoints/**/*.pth.tar
+!artifacts/checkpoints/mnist/final_best_epoch.pth.tar
+
+# Personal analysis files
+*.ipynb
+*.pdf

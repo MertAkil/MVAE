@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mvae-mnist"
+version = "0.1.0"
+description = "MNIST-focused Multimodal Variational Autoencoder in PyTorch"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Mert Akil" }]
+dependencies = [
+    "matplotlib>=3.7.1",
+    "numpy>=1.24.3",
+    "torch>=2.0.1",
+    "torchvision>=0.15.2",
+    "tqdm>=4.65.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.6.0",
+]
+
+[project.scripts]
+mvae-mnist = "mvae_mnist.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = [
+    ".git",
+    ".venv",
+    "data",
+    "outputs",
+]
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

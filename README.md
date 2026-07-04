@@ -1,73 +1,118 @@
-# Multimodal Variational Autoencoder (MVAE)
+# Multimodal Variational Autoencoder for MNIST
 
-## Overview
+This repository contains a PyTorch implementation of a Multimodal Variational
+Autoencoder (MVAE) inspired by Mike Wu and Noah Goodman's paper
+["Multimodal Generative Models for Scalable Weakly-Supervised Learning"](https://arxiv.org/abs/1802.05335).
+It was originally built during a machine learning master-level project at TU Berlin and
+has since been cleaned up as a portfolio-quality research engineering project.
 
-This repository contains an implementation of the Multimodal Variational Autoencoder (MVAE), a generative model introduced in the paper "Multimodal Generative Models for Scalable Weakly-Supervised Learning" by Mike Wu and Noah Goodman. This implementation is part of a machine learning class project conducted at TU Berlin.
+The implementation focuses on a compact MNIST setting with two modalities:
 
-The project focuses on exploring the MVAE's capability to efficiently learn joint representations from multiple modalities using a variational autoencoder approach.
+- image modality: `28 x 28` grayscale digit images
+- label modality: categorical digit labels from `0` to `9`
 
-## Getting Started
-The MVAE is implemented currently with only the MNIST dataset. You can use the already trained model in order to generate images conditioned on certain labels and vice verca.
+The model learns modality-specific encoders, combines latent Gaussian experts with a
+product of experts, and decodes from the shared latent representation back into image
+and label space.
 
-### Prerequisites
+## Results
 
-- Python (>=3.6)
-- torch (>= 2.0.1)
-- torchvision (>= 0.15.2)
-- numpy (>= 1.24.3)
-- matplotlib (>= 3.7.1)
+Generated samples conditioned on digit label `6`:
 
+![Generated MNIST digits conditioned on label 6](docs/assets/generated-image-label-6.png)
 
-### Installation and usage
+Generated samples conditioned on digit label `5`:
 
-1. Clone the repository:
+![Generated MNIST digits conditioned on label 5](docs/assets/generated-image-label-5.png)
 
-   ```bash
-   git clone https://github.com/your-username/MVAE.git
-   cd MVAE
-   ```
+Validation loss from the original training run:
 
-2. Sampling data
+![Validation loss curve](docs/assets/validation-loss.png)
 
-   Pre-trained model weights are located at:
+## Installation
 
-   ```bash
-   src/<dataset_name>/trained_models
-   ```
+```bash
+git clone git@github.com:MertAkil/MVAE.git
+cd MVAE
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install --upgrade pip
+python3 -m pip install -e ".[dev]"
+```
 
-   Each model has a corresponding best-performing set of weights, saved as:
+This project targets Python 3.10 or newer. For GPU-specific PyTorch builds, use the
+installation command recommended by the official PyTorch selector, then install this
+project in editable mode.
 
-   ```bash
-   src/<dataset_name>/trained_models/final_best_epoch.pth.tar
-   ```
-   
-   The default model in `sample.py`uses these weights. Adjust the `condition_on_image` and `condition_on_text` variables as needed. 
+## Usage
 
-   To generate new data, execute:
+Generate samples from the included best checkpoint:
 
-   ```bash
-   python sample.py
-   ```
+```bash
+mvae-mnist sample \
+  --condition-label 6 \
+  --num-samples 64 \
+  --checkpoint artifacts/checkpoints/mnist/final_best_epoch.pth.tar \
+  --output-dir outputs/samples
+```
 
-3. <i>(optional)</i> Train model
+Run a quick training smoke test:
 
-   If you wish to train the model on a specific device, modify the hyperparameters in:
+```bash
+mvae-mnist train \
+  --epochs 1 \
+  --batch-size 16 \
+  --limit-train-batches 2 \
+  --limit-val-batches 1 \
+  --checkpoint-dir outputs/checkpoints
+```
 
-   ```bash
-   src/<dataset_name>/utils.py
-   ```
+Run a lightweight importance-sampling evaluation:
 
-   Specify a location to store the resulting weights in:
+```bash
+mvae-mnist evaluate \
+  --checkpoint artifacts/checkpoints/mnist/final_best_epoch.pth.tar \
+  --condition-label 5
+```
 
-   ```
-   src/<dataset_name>/train.py
-   ```
+Useful conditioning options:
 
-   Run the following command to initiate the training
-   ```
-   python train.py
-   ```
+- `--condition-label 0` through `--condition-label 9` conditions on the label modality.
+- `--condition-image-label 5` fetches a test-set image with that digit and conditions on
+  the image modality.
+- `--condition-label none --condition-image-label 5` performs image-only conditioning.
+- `--prior` samples from the unit Gaussian prior without conditioning.
+- `--device auto|cpu|cuda|mps` controls device selection.
 
+## Repository Structure
 
+```text
+artifacts/checkpoints/mnist/     included best checkpoint
+docs/assets/                     example outputs and training curves
+src/mvae_mnist/                  package code and CLI
+tests/                           focused unit tests
+```
 
-### TODO
+Only the best checkpoint is kept in the visible tree. New training outputs are written
+to `outputs/` by default and ignored by Git. The repository history has not been
+rewritten, so older large checkpoint blobs may still exist in Git history.
+
+## Engineering Notes
+
+The code intentionally keeps the original research architecture recognizable while
+modernizing the project around it:
+
+- package-based imports instead of current-working-directory scripts
+- deterministic train/validation split and real MNIST test split
+- explicit CPU/CUDA/MPS device handling
+- modern PyTorch APIs without `.data`, `Variable`, or deprecated MNIST fields
+- typed configuration objects for training, sampling, and paths
+- test coverage for model shapes, conditioning behavior, ELBO sanity, and data splits
+- CLI commands suitable for demos, smoke tests, and technical discussion
+
+## Limitations
+
+This is a compact research/portfolio project, not a production ML service. It currently
+supports MNIST only, uses a small fully connected architecture, and does not include
+experiment tracking, distributed training, or model registry integration. Those are
+natural next steps if the project were expanded beyond its educational scope.
